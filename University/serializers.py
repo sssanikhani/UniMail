@@ -13,7 +13,7 @@ class StudentShallowSerializer(serializers.ModelSerializer):
 
 
 class ClassSerializer(serializers.ModelSerializer):
-    students = StudentShallowSerializer(source='student_set', many=True)
+    students = StudentShallowSerializer(source='student_set', many=True, read_only=True)
 
     class Meta:
         model = Class

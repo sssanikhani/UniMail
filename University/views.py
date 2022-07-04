@@ -43,7 +43,7 @@ class ClassView(APIView):
             obj = Class.objects.get(pk=class_id)
         except Class.DoesNotExist:
             raise PermissionDenied()
-        serializer = ClassSerializer(obj, data=request.body)
+        serializer = ClassSerializer(instance=obj, data=request.data)
         serializer.is_valid(raise_exception=True)
         obj = serializer.save()
         response = ClassSerializer(obj).data
