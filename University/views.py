@@ -95,6 +95,8 @@ class StudentView(APIView):
 
 
 class EmailView(APIView):
+    permission_classes = (IsAuthenticated,)
+
     def post(self, request):
         class_id = int(self.request.GET.get('class_id'))
         try:
