@@ -6,11 +6,19 @@ from rest_framework.exceptions import ValidationError
 from .models import Student, Class
 
 
+class StudentShallowSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Student
+        fields = ('id', 'name', 'email', 'score')
+
+
 class ClassSerializer(serializers.ModelSerializer):
+    students = StudentShallowSerializer(source='student_set', many=True)
+
     class Meta:
         model = Class
-        fields = ['id', 'name', 'teacher']
-        read_only_fields = ('id',)
+        fields = ['id', 'name', 'teacher', 'students']
+        read_only_fields = ('id', 'students',)
 
 
 class StudentSerializer(serializers.ModelSerializer):
