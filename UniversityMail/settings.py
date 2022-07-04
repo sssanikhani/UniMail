@@ -9,8 +9,31 @@ https://docs.djangoproject.com/en/4.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.0/ref/settings/
 """
-
+import os
+import re
 from pathlib import Path
+
+ENV_VARS_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '.env')
+
+
+def setdefault_simple_ci_vars():
+    if os.path.isfile(ENV_VARS_FILE):
+        with open(ENV_VARS_FILE, 'r') as f:
+            for line in f:
+                line = line.strip()
+                m = re.match(r'^(?:export\s+)?(\w+)=(.+)$', line)
+                if m:
+                    value = m[2].strip()  # needs to be literal string value
+                    if ((value.startswith('"') and value.endswith('"'))
+                            or (value.startswith("'") and value.endswith("'"))):
+                        value = eval(value)
+                    var = m[1]
+                    os.environ.setdefault(var, value)
+
+
+if os.environ.get("ENV_VARS_LOADED", None) != "1":
+    setdefault_simple_ci_vars()
+    os.environ["ENV_VARS_LOADED"] = "1"
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -19,12 +42,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-^ik*bxv^b$st*fnk@7$b2549bcw$gmwj-^$x!#)r2n&_1prm8l'
+SECRET_KEY = os.environ.get("UNIEMAIL_SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = True if os.environ.get("UNIEMAIL_DEBUG").lower() not in ['false', 'f', '0'] else False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.environ.get("UNIEMAIL_ALLOWED_HOSTS").split(';')
 
 # Application definition
 
@@ -73,8 +96,10 @@ WSGI_APPLICATION = 'UniversityMail.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.environ.get('UNIEMAIL_DB_NAME'),
+        'USER': os.environ.get('UNIEMAIL_DB_USERNAME'),
+        'PASSWORD': os.environ.get('UNIEMAIL_DB_PASSWORD')
     }
 }
 
@@ -101,7 +126,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Tehran'
 
 USE_I18N = True
 
