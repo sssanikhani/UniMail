@@ -4,7 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import Class
+from .models import Class, Student
 from .serializers import ClassSerializer, StudentSerializer
 
 
@@ -51,6 +51,7 @@ class ClassView(APIView):
 
 
 class CreateStudentView(APIView):
+    permission_classes = (IsAuthenticated,)
 
     def post(self, request):
         many = type(request.data) is list
@@ -59,3 +60,34 @@ class CreateStudentView(APIView):
         objs = serializer.save()
         response = StudentSerializer(objs, many=many).data
         return Response(response, status=status.HTTP_201_CREATED)
+
+
+class StudentView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def get(self, request, student_id):
+        try:
+            obj = Student.objects.get(pk=student_id)
+        except Student.DoesNotExist:
+            raise NotFound("student with this id does not exist")
+        response = StudentSerializer(obj).data
+        return Response(response)
+
+    def delete(self, request, student_id):
+        try:
+            obj = Student.objects.get(pk=student_id)
+        except Student.DoesNotExist:
+            raise PermissionDenied()
+        obj.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    def put(self, request, student_id):
+        try:
+            obj = Student.objects.get(pk=student_id)
+        except Student.DoesNotExist:
+            raise PermissionDenied()
+        serializer = StudentSerializer(instance=obj, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        obj = serializer.save()
+        response = StudentSerializer(obj).data
+        return Response(response)
