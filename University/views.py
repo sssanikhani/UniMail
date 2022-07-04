@@ -6,6 +6,7 @@ from rest_framework.views import APIView
 
 from .models import Class, Student
 from .serializers import ClassSerializer, StudentSerializer
+from .utils import send_email
 
 
 class CreateClassView(APIView):
@@ -90,4 +91,20 @@ class StudentView(APIView):
         serializer.is_valid(raise_exception=True)
         obj = serializer.save()
         response = StudentSerializer(obj).data
+        return Response(response)
+
+
+class EmailView(APIView):
+    def post(self, request):
+        class_id = int(self.request.GET.get('class_id'))
+        try:
+            obj = Class.objects.get(pk=class_id)
+        except Class.DoesNotExist:
+            raise PermissionDenied()
+
+        students = obj.student_set.all()
+        response = list()
+        for std in students:
+            res = send_email(std)
+            response.append({'email': std.email, 'status': 'failed' if res == 0 else 'success'})
         return Response(response)
